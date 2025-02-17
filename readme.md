@@ -5,7 +5,7 @@ A lightweight Windows app solely designed to kill and start MarkAny services (Do
 ![unMark Icon](unmark-ico.ico)
 
 ## Features
-- **Process Monitoring**: 
+- **Manage MarkAny Processes**: Monitor, kill, and start MarkAny processes
 - **Sortable Interface**: Sort processes by any column (Name, PID, Username, Memory)
 - **Tooltips**: Helpful tooltips on all controls for better usability
 
