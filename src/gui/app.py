@@ -1,6 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
+from tkinter import ttk, filedialog, messagebox
 from .frames.process_list import ProcessListFrame
 from .frames.controls import ControlsFrame
 from ..core.process_handler import ProcessHandler
@@ -33,11 +32,99 @@ class ProcessManagerApp(tk.Tk):
         
         self.process_handler = ProcessHandler()
         
-        # Create frames
-        self.process_list = ProcessListFrame(self)
-        self.controls = ControlsFrame(self)
+        # Style configuration for tabs
+        style = ttk.Style()
+        style.configure('TNotebook.Tab', padding=[10, 5], font=('Segoe UI', '10'))
         
-        # Layout
+        # Create notebook for tabs
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(expand=True, fill='both', padx=5, pady=5)
+        
+        # Create tabs
+        self.tab1 = ttk.Frame(self.notebook)
+        self.tab2 = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab1, text='Process')
+        self.notebook.add(self.tab2, text='Word')
+        
+        # Add title to second tab
+        title_label = ttk.Label(
+            self.tab2,
+            text="MarkAny Document SAFER Word Add In",
+            font=('Segoe UI', '12', 'bold'),
+            padding=10
+        )
+        title_label.pack(anchor='w', padx=10, pady=(10, 20))
+        
+        # Create frame for Word controls
+        word_frame = ttk.Frame(self.tab2)
+        word_frame.pack(fill='x', padx=10, pady=5)
+        
+        # Add system info to second tab
+        system_info = ttk.Label(
+            word_frame, 
+            text=f"System Architecture: {self.process_handler.get_architecture()}",
+            font=('Segoe UI', '10'),
+            padding=(0, 5)
+        )
+        system_info.pack(anchor='w')
+        
+        # Add Word version label and combobox
+        version_label = ttk.Label(
+            word_frame,
+            text="Select word version:",
+            font=('Segoe UI', '10'),
+            padding=(0, 15, 0, 5)
+        )
+        version_label.pack(anchor='w')
+        
+        self.word_versions = self.process_handler.word_versions
+        self.word_combo = ttk.Combobox(
+            word_frame, 
+            values=self.word_versions,
+            state='readonly',
+            font=('Segoe UI', '10'),
+            width=30
+        )
+        if self.word_versions:
+            self.word_combo.set(self.word_versions[0])
+        self.word_combo.pack(pady=(0, 5))
+        
+        # Add directory label
+        dir_label = ttk.Label(
+            word_frame,
+            text="Select your Document SAFER folder:",
+            font=('Segoe UI', '10'),
+            padding=(0, 15, 0, 5)
+        )
+        dir_label.pack(anchor='w')
+        
+        # Create directory browser frame
+        dir_frame = ttk.Frame(word_frame)
+        dir_frame.pack(pady=5)
+        
+        # Add directory entry and browse button
+        self.dir_entry = ttk.Entry(dir_frame, width=40, font=('Segoe UI', '10'))
+        self.browse_btn = ttk.Button(dir_frame, text="Browse", command=self.browse_directory)
+        
+        self.dir_entry.pack(side=tk.LEFT, padx=(0, 5))
+        self.browse_btn.pack(side=tk.LEFT)
+        
+        # Create button frame
+        button_frame = ttk.Frame(word_frame)
+        button_frame.pack(pady=15)
+        
+        # Add control buttons
+        self.disable_btn = ttk.Button(button_frame, text="Disable", command=self.disable_word)
+        self.enable_btn = ttk.Button(button_frame, text="Enable", command=self.enable_word)
+        
+        self.disable_btn.pack(side=tk.LEFT, padx=2)
+        self.enable_btn.pack(side=tk.LEFT, padx=2)
+        
+        # Create frames in first tab
+        self.process_list = ProcessListFrame(self.tab1)
+        self.controls = ControlsFrame(self.tab1)
+        
+        # Layout for first tab
         self.process_list.pack(expand=True, fill='both', padx=5, pady=5)
         self.controls.pack(fill='x', padx=5, pady=5)
         
@@ -68,4 +155,46 @@ class ProcessManagerApp(tk.Tk):
             # Refresh the process list after starting services
             self.check_processes()
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to start services: {str(e)}") 
+            messagebox.showerror("Error", f"Failed to start services: {str(e)}")
+
+    def disable_word(self):
+        selected = self.word_combo.get()
+        folder = self.dir_entry.get()
+        
+        if not selected:
+            messagebox.showerror("Error", "Please select a Word version")
+            return
+        
+        if not folder:
+            messagebox.showerror("Error", "Please select the Document SAFER folder")
+            return
+        
+        success, message = self.process_handler.toggle_dll(folder, selected, disable=True)
+        if success:
+            messagebox.showinfo("Success", message)
+        else:
+            messagebox.showerror("Error", message)
+
+    def enable_word(self):
+        selected = self.word_combo.get()
+        folder = self.dir_entry.get()
+        
+        if not selected:
+            messagebox.showerror("Error", "Please select a Word version")
+            return
+        
+        if not folder:
+            messagebox.showerror("Error", "Please select the Document SAFER folder")
+            return
+        
+        success, message = self.process_handler.toggle_dll(folder, selected, disable=False)
+        if success:
+            messagebox.showinfo("Success", message)
+        else:
+            messagebox.showerror("Error", message)
+
+    def browse_directory(self):
+        directory = filedialog.askdirectory()
+        if directory:
+            self.dir_entry.delete(0, tk.END)
+            self.dir_entry.insert(0, directory)
