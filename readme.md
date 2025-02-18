@@ -7,19 +7,18 @@ A lightweight Windows app solely designed to kill and start MarkAny services (Do
 ## Features
 - **Manage MarkAny Processes**: Monitor, kill, and start MarkAny processes
 - **Sortable Interface**: Sort processes by any column (Name, PID, Username, Memory)
-- **Tooltips**: Helpful tooltips on all controls for better usability
 
 ## Requirements
 
-- Windows OS
-- Administrative privileges (required for service management)
-- Python 3.9+ (if running from source)
+- Windows
+- Administrative privileges
+- Python 3
 
 ## Installation
 
 ### Option 1: Download Executable
 1. Download the latest release from the Releases page
-2. Run `unmark.exe` (requires admin privileges)
+2. Run `unmark.exe`
 
 ### Option 2: Run from Source
 1. Clone the repository
