@@ -9,7 +9,7 @@ I am not responsible for any damages done to your system due to this program. By
 ## Features
 - **Manage MarkAny Processes**: Monitor, kill, and start MarkAny processes
 - **Sortable Interface**: Sort processes by any column (Name, PID, Username, Memory)
-- **Word Add In Control**: Disable / Enable the MarkAny Document SAFER DRM add in
+- **Word/Excel Add In Control**: Disable / Enable the MarkAny Document SAFER DRM add in
 
 ## Requirements
 
@@ -33,6 +33,6 @@ I am not responsible for any damages done to your system due to this program. By
 2. Scan for processes by clicking "Check"
 3. Terminate processes by clicking "Terminate" (Does not need to click "Check" first)
 4. Start services by selecting them and clicking "Start" (Does not need to click "Check" first)
-5. For the Word add in control, go to the second tab and enter the appropriate Word version & Document SAFER directory
+5. For the Word/Excel add in control, go to the other tabs and enter the appropriate Word/Excel versions & Document SAFER directory
 
 
