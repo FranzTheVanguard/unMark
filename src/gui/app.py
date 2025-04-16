@@ -41,98 +41,121 @@ class ProcessManagerApp(tk.Tk):
         self.notebook.pack(expand=True, fill='both', padx=5, pady=5)
         
         # Create tabs
-        self.tab1 = ttk.Frame(self.notebook)
-        self.tab2 = ttk.Frame(self.notebook)
+        self.tab1 = ttk.Frame(self.notebook) # Process Tab
+        self.tab2 = ttk.Frame(self.notebook) # Word Tab
+        self.tab3 = ttk.Frame(self.notebook) # Excel Tab
+        
         self.notebook.add(self.tab1, text='Process')
-        self.notebook.add(self.tab2, text='Word')
+        self.notebook.add(self.tab2, text='Word Add-in')
+        self.notebook.add(self.tab3, text='Excel Add-in') # Add Excel tab
         
-        # Add title to second tab
-        title_label = ttk.Label(
-            self.tab2,
-            text="MarkAny Document SAFER Word Add In",
-            font=('Segoe UI', '12', 'bold'),
-            padding=10
-        )
-        title_label.pack(anchor='w', padx=10, pady=(10, 20))
+        # Add attribute to store the shared directory path
+        self.shared_directory_path = tk.StringVar() 
         
-        # Create frame for Word controls
-        word_frame = ttk.Frame(self.tab2)
-        word_frame.pack(fill='x', padx=10, pady=5)
-        
-        # Add system info to second tab
-        system_info = ttk.Label(
-            word_frame, 
-            text=f"System Architecture: {self.process_handler.get_architecture()}",
-            font=('Segoe UI', '10'),
-            padding=(0, 5)
-        )
-        system_info.pack(anchor='w')
-        
-        # Add Word version label and combobox
-        version_label = ttk.Label(
-            word_frame,
-            text="Select word version:",
-            font=('Segoe UI', '10'),
-            padding=(0, 15, 0, 5)
-        )
-        version_label.pack(anchor='w')
-        
-        self.word_versions = self.process_handler.word_versions
-        self.word_combo = ttk.Combobox(
-            word_frame, 
-            values=self.word_versions,
-            state='readonly',
-            font=('Segoe UI', '10'),
-            width=30
-        )
-        if self.word_versions:
-            self.word_combo.set(self.word_versions[0])
-        self.word_combo.pack(pady=(0, 5))
-        
-        # Add directory label
-        dir_label = ttk.Label(
-            word_frame,
-            text="Select your Document SAFER folder:",
-            font=('Segoe UI', '10'),
-            padding=(0, 15, 0, 5)
-        )
-        dir_label.pack(anchor='w')
-        
-        # Create directory browser frame
-        dir_frame = ttk.Frame(word_frame)
-        dir_frame.pack(pady=5)
-        
-        # Add directory entry and browse button
-        self.dir_entry = ttk.Entry(dir_frame, width=40, font=('Segoe UI', '10'))
-        self.browse_btn = ttk.Button(dir_frame, text="Browse", command=self.browse_directory)
-        
-        self.dir_entry.pack(side=tk.LEFT, padx=(0, 5))
-        self.browse_btn.pack(side=tk.LEFT)
-        
-        # Create button frame
-        button_frame = ttk.Frame(word_frame)
-        button_frame.pack(pady=15)
-        
-        # Add control buttons
-        self.disable_btn = ttk.Button(button_frame, text="Disable", command=self.disable_word)
-        self.enable_btn = ttk.Button(button_frame, text="Enable", command=self.enable_word)
-        
-        self.disable_btn.pack(side=tk.LEFT, padx=2)
-        self.enable_btn.pack(side=tk.LEFT, padx=2)
-        
-        # Create frames in first tab
+        # --- Populate Process Tab (Tab 1) ---
         self.process_list = ProcessListFrame(self.tab1)
         self.controls = ControlsFrame(self.tab1)
-        
-        # Layout for first tab
         self.process_list.pack(expand=True, fill='both', padx=5, pady=5)
         self.controls.pack(fill='x', padx=5, pady=5)
-        
-        # Bind button actions
         self.controls.check_btn.configure(command=self.check_processes)
         self.controls.kill_btn.configure(command=self.kill_processes)
         self.controls.start_btn.configure(command=self.start_services)
+        
+        # --- Populate Word Tab (Tab 2) ---
+        self._populate_addin_tab(
+            self.tab2, 
+            "Word", 
+            "MarkAny Document SAFER Word Add In"
+        )
+
+        # --- Populate Excel Tab (Tab 3) ---
+        self._populate_addin_tab(
+            self.tab3, 
+            "Excel", 
+            "MarkAny Document SAFER Excel Add In"
+        )
     
+    def _populate_addin_tab(self, tab_frame, app_type, title_text):
+        """Helper method to populate Word/Excel tabs to avoid repetition."""
+        
+        # Add title
+        title_label = ttk.Label(tab_frame, text=title_text, font=('Segoe UI', '12', 'bold'), padding=10)
+        title_label.pack(anchor='w', padx=10, pady=(10, 20))
+        
+        # Frame for controls
+        controls_frame = ttk.Frame(tab_frame)
+        controls_frame.pack(fill='x', padx=10, pady=5)
+
+        # System info
+        system_info = ttk.Label(controls_frame, text=f"System Architecture: {self.process_handler.get_architecture()}", font=('Segoe UI', '10'), padding=(0, 5))
+        system_info.pack(anchor='w')
+
+        # Version selection
+        version_label = ttk.Label(controls_frame, text=f"Select {app_type} version (Year):", font=('Segoe UI', '10'), padding=(0, 15, 0, 5))
+        version_label.pack(anchor='w')
+        
+        combo = ttk.Combobox(controls_frame, values=self.process_handler.office_versions, state='readonly', font=('Segoe UI', '10'), width=30)
+        if self.process_handler.office_versions:
+            combo.set(self.process_handler.office_versions[-1]) # Default to latest
+        combo.pack(pady=(0, 5))
+
+        # Directory selection
+        dir_label = ttk.Label(controls_frame, text="Select your Document SAFER folder:", font=('Segoe UI', '10'), padding=(0, 15, 0, 5))
+        dir_label.pack(anchor='w')
+        
+        dir_frame = ttk.Frame(controls_frame)
+        dir_frame.pack(pady=5)
+        
+        # Use the shared tk.StringVar for the directory entry
+        dir_entry = ttk.Entry(dir_frame, width=40, font=('Segoe UI', '10'), 
+                              textvariable=self.shared_directory_path) 
+        # Update browse command to call the modified browse_directory
+        browse_btn = ttk.Button(dir_frame, text="Browse", command=self.browse_directory) 
+        dir_entry.pack(side=tk.LEFT, padx=(0, 5))
+        browse_btn.pack(side=tk.LEFT)
+
+        # Enable/Disable buttons
+        button_frame = ttk.Frame(controls_frame)
+        button_frame.pack(pady=15)
+        
+        # Use lambda to pass necessary info to the toggle function
+        disable_btn = ttk.Button(button_frame, text="Disable", 
+                                 command=lambda: self.toggle_addin(app_type, combo, dir_entry, disable=True))
+        enable_btn = ttk.Button(button_frame, text="Enable", 
+                                command=lambda: self.toggle_addin(app_type, combo, dir_entry, disable=False))
+                                 
+        disable_btn.pack(side=tk.LEFT, padx=2)
+        enable_btn.pack(side=tk.LEFT, padx=2)
+
+        # Store references (this part is actually not needed for synchronization anymore,
+        # but keep it if you might need direct access to widgets later)
+        setattr(self, f"{app_type.lower()}_combo", combo)
+        setattr(self, f"{app_type.lower()}_dir_entry", dir_entry) # Keep for toggle_addin
+
+    def toggle_addin(self, app_type, combo_widget, dir_entry_widget, disable):
+        """Generic method to handle enabling/disabling add-ins."""
+        selected_year = combo_widget.get()
+        # Get folder path from the shared variable, not the specific widget's content
+        folder = self.shared_directory_path.get() 
+        action = "disable" if disable else "enable"
+
+        if not selected_year:
+            messagebox.showerror("Error", f"Please select an {app_type} version (Year)")
+            return
+        
+        if not folder or not os.path.isdir(folder):
+            messagebox.showerror("Error", "Please select a valid Document SAFER folder")
+            return
+        
+        success, message = self.process_handler.toggle_add_in(
+            app_type, folder, selected_year, disable=disable
+        )
+        
+        if success:
+            messagebox.showinfo("Success", message)
+        else:
+            messagebox.showerror(f"{action.capitalize()} Error", message)
+
     def check_processes(self):
         processes = self.process_handler.find_processes()
         self.process_list.update_table(processes)
@@ -157,44 +180,11 @@ class ProcessManagerApp(tk.Tk):
         except Exception as e:
             messagebox.showerror("Error", f"Failed to start services: {str(e)}")
 
-    def disable_word(self):
-        selected = self.word_combo.get()
-        folder = self.dir_entry.get()
-        
-        if not selected:
-            messagebox.showerror("Error", "Please select a Word version")
-            return
-        
-        if not folder:
-            messagebox.showerror("Error", "Please select the Document SAFER folder")
-            return
-        
-        success, message = self.process_handler.toggle_dll(folder, selected, disable=True)
-        if success:
-            messagebox.showinfo("Success", message)
-        else:
-            messagebox.showerror("Error", message)
-
-    def enable_word(self):
-        selected = self.word_combo.get()
-        folder = self.dir_entry.get()
-        
-        if not selected:
-            messagebox.showerror("Error", "Please select a Word version")
-            return
-        
-        if not folder:
-            messagebox.showerror("Error", "Please select the Document SAFER folder")
-            return
-        
-        success, message = self.process_handler.toggle_dll(folder, selected, disable=False)
-        if success:
-            messagebox.showinfo("Success", message)
-        else:
-            messagebox.showerror("Error", message)
-
     def browse_directory(self):
-        directory = filedialog.askdirectory()
+        """Handles directory browsing and updates the shared path variable."""
+        # Suggest the current path as starting directory if one exists
+        initial_dir = self.shared_directory_path.get() or "/" 
+        directory = filedialog.askdirectory(initialdir=initial_dir)
         if directory:
-            self.dir_entry.delete(0, tk.END)
-            self.dir_entry.insert(0, directory)
+            # Update the shared tk.StringVar, which automatically updates all linked Entry widgets
+            self.shared_directory_path.set(directory) 

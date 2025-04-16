@@ -9,8 +9,14 @@ class ProcessHandler:
         # Detect system architecture
         self.is_64bits = platform.machine().endswith('64')
         
-        # Initialize word_versions
-        self.word_versions = ["Word 2007", "Word 2010", "Word 2013", "Word 2016"]
+        # Use years for generic version selection
+        self.office_versions = ["2007", "2010", "2013", "2016"] 
+        
+        # Define DLL patterns per application
+        self.dll_patterns = {
+            "Word": "DSP_01_{}{}.dll",
+            "Excel": "DSP_03_{}{}.dll"
+        }
         
         # Filter processes based on architecture
 
@@ -31,8 +37,6 @@ class ProcessHandler:
             "IMGSF50_Svc",
             "LiveUpdate Service V6"
         ]
-        
-        self.dll_pattern = "DSP_01_{}{}.dll"
     
     def get_architecture(self):
         return "64-bit" if self.is_64bits else "32-bit"
@@ -68,32 +72,36 @@ class ProcessHandler:
                 results.append((service_name, f"Failed: {str(e)}"))
         return results
 
-    def get_dll_name(self, word_version):
-        # Extract year from version string (e.g., "Word 2013" -> "2013")
-        year = word_version.split()[-1]
-        arch_suffix = "64" if self.is_64bits else ""
-        return self.dll_pattern.format(year, arch_suffix)
-    
-    def toggle_dll(self, folder_path, word_version, disable=True):
-        try:
-            dll_name = self.get_dll_name(word_version)
-            dll_path = os.path.join(folder_path, dll_name)
-            disabled_dll_path = f"{dll_path[:-4]}_.dll"
+    def _get_add_in_dll_name(self, app_type, office_year):
+        """Generates the DLL name based on app type, year, and architecture."""
+        pattern = self.dll_patterns.get(app_type)
+        if not pattern:
+            raise ValueError(f"Unknown application type: {app_type}")
             
-            if disable:
-                # Check if original DLL exists
-                if os.path.exists(dll_path):
-                    os.rename(dll_path, disabled_dll_path)
-                    return True, f"Successfully disabled {dll_name}"
-                else:
-                    return False, f"DLL {dll_name} not found"
+        arch_suffix = "64" if self.is_64bits else ""
+        return pattern.format(office_year, arch_suffix)
+    
+    def toggle_add_in(self, app_type, folder_path, office_year, disable=True):
+        """Toggles the specified Office add-in DLL on or off."""
+        try:
+            dll_name = self._get_add_in_dll_name(app_type, office_year)
+            dll_path = os.path.join(folder_path, dll_name)
+            # Append underscore before the extension
+            base, ext = os.path.splitext(dll_path)
+            disabled_dll_path = f"{base}_{ext}" 
+            
+            action = "disable" if disable else "enable"
+            source_path = dll_path if disable else disabled_dll_path
+            target_path = disabled_dll_path if disable else dll_path
+            
+            not_found_path = dll_path if disable else disabled_dll_path
+            expected_state = "enabled" if disable else "disabled"
+
+            if os.path.exists(source_path):
+                os.rename(source_path, target_path)
+                return True, f"Successfully {action}d {dll_name}"
             else:
-                # Check if disabled DLL exists
-                if os.path.exists(disabled_dll_path):
-                    os.rename(disabled_dll_path, dll_path)
-                    return True, f"Successfully enabled {dll_name}"
-                else:
-                    return False, f"Disabled DLL {dll_name}_ not found"
+                return False, f"Could not {action}. DLL not found in the expected {expected_state} state: {os.path.basename(not_found_path)}"
                     
         except Exception as e:
-            return False, f"Error: {str(e)}" 
+            return False, f"Error during {action}: {str(e)}" 
